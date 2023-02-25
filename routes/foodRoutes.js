@@ -5,12 +5,17 @@ const foodModel = require("../models/Food");
 // json形式でデータを扱うことを宣言する
 app.use(express.json());
 
-// データの取得
+// データの取得(tag指定なし)
 app.get("/foods", async (req, res) => {
-  // databaseの中のデータを全て返す
-  // Food.jsを使う
-  console.log(req.query);
-  const foods = await foodModel.find({});
+  // クエリパラメータからrateを取得
+  const rate = Number(req.query.rate ?? 0);
+  let foods;
+  // レートがNanなら全てのデータを返す
+  if (rate == 0) {
+    foods = await foodModel.find({});
+  } else {
+    foods = await foodModel.find({ rate: { $gte: rate } });
+  }
   try {
     res.send(foods);
   } catch (err) {
@@ -18,13 +23,17 @@ app.get("/foods", async (req, res) => {
   }
 });
 
-// データの取得
+// データの取得(tag指定あり)
 app.get("/foods/:tags", async (req, res) => {
-  // databaseの中のデータを全て返す
-  // Food.jsを使う
+  console.log(req.query);
+  const rate = Number(req.query.rate ?? 0);
   const tags = req.params.tags.split(",");
   console.log(tags);
-  const foods = await foodModel.find({ tags: { $in: tags } });
+  const foods = await foodModel.find({
+    tags: { $all: tags },
+    rate: { $gte: rate },
+  });
+  console.log(foods);
   try {
     res.send(foods);
   } catch (err) {
